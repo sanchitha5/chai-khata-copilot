@@ -1,69 +1,109 @@
 # Chai Khata Copilot — Speak. Manage. Grow.
 Voice-first business copilot for chaiwalas: udhaar ledger, sales, expenses, inventory prediction, insights, bill review, daily report.
 
-## Architecture
-- `backend/` FastAPI + SQLite (money as integer paise, FK + CHECK constraints, per-shop isolation via `shop_id`)
-- `nlu.py` Hindi/Hinglish/English parser (rules; optional LLM via `ANTHROPIC_API_KEY`, validated, falls back to rules)
-- `tools.py` deterministic tools: credit, payment, sale, expense, stock, predict, insights, dashboard. The parser/LLM never writes to the DB.
-- Flow: `/api/voice` parses and stores a *pending* action list -> user confirms -> `/api/confirm` executes in one DB transaction with idempotency keys and audit log.
-- `frontend/index.html` single-page UI served at `/` (mic via browser Web Speech API, text fallback).
+## Table of contents
+1. [The problem](#the-problem)
+2. [Features](#features)
+3. [How it works](#how-it-works)
+4. [Tech stack](#tech-stack)
+5. [Run](#run)
+6. [API Reference](#api-reference)
+
+
+
+## The problem
+Small chai stalls run on ₹10 cups and a paper notebook:
+- **Udhaar lives on paper.** Entries get lost, forgotten or disputed.
+- **Hands are always busy.** There is no time to type, so sales and expenses go unrecorded.
+- **Profit is a guess.** The owner sees cash in the drawer, not what the day actually earned.
+- **Apps do not speak his language.** Most business apps are English-only with complex forms.
+
+## Features
+
+| Feature | What id does |
+|---|---|
+| **Voice & Text Entry** | Speak or type in Hindi, English or Hinglish. |
+|  **One-Tap Sales** | Instantly record product sales with an Undo option. |
+| **Udhaar Ledger** | Track customer credit, repayments and outstanding balances. |
+| **Smart Name Matching** | Recognizes names across English and Devanagari scripts. |
+| **Sales & Profit** | Dashboard with sales, cash/UPI, expenses and estimated profit. |
+| **Inventory Prediction** | Track stock and estimate tomorrow's requirements. |
+| **Business Insights** | Weekly sales trends, profitable products and peak hours. |
+| **Bill Review** | Review supplier bills before updating stock and expenses. |
+| **Shop Settings** | Manage products, prices, costs and owner information. |
+| **WhatsApp Reports** | Daily 9 PM business summary for the shop owner. |
+| **Bilingual Interface** | Complete English and Hindi interface. |
+| **Demo Mode** | Explore a separate demo shop with 10 customers and 30 days of sample data. |
+
+## How it works
+
+```
+speak / type  ->  /api/voice  ->  parser proposes actions  ->  pending (nothing saved yet)
+                                                                  |
+                         owner confirms  ->  /api/confirm  ->  one DB transaction + audit log
+```
+
+- **The parser never writes to the database.** `/api/voice` only stores a *pending* action list. Only `/api/confirm` executes it, in a single transaction, with idempotency keys. A misheard word cannot corrupt the books.
+- Balance questions ("Ramesh ka kitna baaki hai?") are answered immediately.
+- Small sales can auto-save with an Undo link; one-tap buttons save instantly.
+- The parser remembers the **last customer**, so "usne 100 de diye" works.
+- Money is stored as **integer paise** (no floating-point rounding errors), with foreign keys and CHECK constraints. Every shop's data is isolated by `shop_id`.
+
+## Tech stack
+- **Frontend:** a single HTML/CSS/JavaScript page (`frontend/index.html`), served by the backend. Browser Web Speech API for mic and spoken replies.
+- **Backend:** Python, FastAPI, Uvicorn.
+- **Database:** SQLite.
+- **Language understanding:** rule-based Hindi/Hinglish/English parser; optional LLM path (Anthropic API) that is validated and falls back to the rules on any error.
+- **Messaging:** Twilio WhatsApp API (daily summary), `wa.me` links (reminders and manual send).
+- **Security:** PBKDF2-SHA256 password hashing, per-shop bearer sessions, in-memory rate limiter, audit log.
+- **Tests:** pytest.
+
 
 ## Run
+
 ```
+Requirements: Python 3.10+ and Chrome (for the mic).
+
+```bash
 cd backend
+python -m venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn main:app --reload      # open http://localhost:8000
-python -m pytest -q            # 17 tests
+uvicorn main:app --reload
 ```
-Env vars: see `.env.example`. Press "Demo data" on the login page for a separate demo shop (10 customers, 30 days of sales/expenses); pressing it again resets it.
 
-## API (all except login/register/demo need `Authorization: Bearer <token>`)
-| Endpoint | Purpose |
-|---|---|
-| POST /api/register, /api/login, /api/demo | get a session token |
-| GET/PUT /api/settings, /settings/shop · POST /settings/password, /settings/test-message | shop & owner info, daily-message switch, password, send a test message |
-| GET/POST /api/products · PUT/DELETE /api/products/{id} | add, edit, remove products (price, cost, Hindi name, spoken words) |
-| PUT /api/customers/{id} `{name,phone}` | edit an udhaar customer's name and phone |
-| POST /api/voice `{text}` | parse; balance questions answered at once, writes return a `pending_id` |
-| POST /api/confirm, /api/cancel `{pending_id}` | execute or drop a pending action (idempotent) |
-| GET /api/dashboard, /customers, /inventory | today's numbers, insights, tomorrow's estimate, balances, stock |
-| GET /api/reminder/{id} | draft WhatsApp reminder (never sent automatically) |
-| POST /api/bill/parse, /bill/confirm `{text,supplier}` | review bill text, then update stock and expenses; duplicate bills rejected |
+Open **http://localhost:8000**, then either register a shop or press **Demo data** on the login page to explore with sample data.
 
-## Known limitations (honest list)
-- Not production-hardened: simple bearer sessions (no expiry/refresh), in-memory rate limiter, SQLite, no HTTPS or row-level DB security.
-- Voice recognition is the browser's (Chrome); it needs internet. Languages: Hindi, English, Hinglish only (no Kannada/Marathi).
-- No offline queue/sync yet: the app needs the server. Chat is single-command with one memory: the last customer (so "usne 100 de diye" works). No longer conversations.
-- Bill scanner takes pasted/OCR text only: no camera or OCR is bundled, and no price-increase comparison.
-- LLM parsing path is written but untested (no API key was available). Rule parser is what the tests cover.
-- Profit uses product costs assumed in `nlu.PROD`, and stock usage per cup assumed in `tools.USE`. Both are estimates. Predictions are a same-weekday average, not a forecast model.
-- Not built: customer credit limits, overdue alerts, suppliers table, order queue, PDF export, deleting customers.
-- Stock usage per cup (`tools.USE`) is still fixed in code; Settings edits the products you sell, not the stock items.
+##  API Reference
 
-## Fast sale entry (no need to say every cup)
-- **One tap:** one big button per product records a sale instantly with an Undo link. A client key makes double taps harmless. The buttons come from your product list (Settings).
-- API: `POST /api/quick`, `POST /api/undo-sale/{id}`.
-- The old "day total" shortcut was removed. Old "Manual total" rows already in a database are kept and still show in reports, but nothing creates new ones.
+All endpoints except registration, login and demo require:
 
-## Settings tab
-- **Shop and owner:** shop name, owner name, phone, address. Changing the phone number (it is also the login) asks for the current password. Password can be changed separately.
-- **Products:** add, edit, remove. Each has a price, a cost (used for profit), an optional Hindi name and extra words you can say ("samose"). Editing a price affects new sales only. Renaming a product renames it in past sales too. Removing hides it (no tap button, no voice match) but keeps past sales.
-- **Udhaar customers:** in the Credit tab, *Edit* changes a customer's name and phone (the phone is used for the WhatsApp reminder).
+```http
+Authorization: Bearer <token>
+```
 
-## Daily 9 PM message (WhatsApp, to the owner himself)
-Every day from 9:00 PM (`NOTIFY_HOUR`, shop-local time, `TZ` default `Asia/Kolkata`) each shop's summary goes to the **owner's own WhatsApp number** (the phone number in Settings): sales (cups, cash/UPI), expenses, estimated profit, best seller and credit pending, in the language chosen in Settings. It is sent once per day (restarts and extra workers do not duplicate it; a server that was down at 9 PM still sends later that evening; failures retry up to 3 times, 10 minutes apart). Demo shops are never messaged. Switch it off in Settings.
-- **Automatic sending needs a WhatsApp provider.** Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` (see `.env.example`).
-  - *Testing:* use Twilio's WhatsApp sandbox number; the owner first sends Twilio's "join <code>" message to it from his WhatsApp.
-  - *Production:* WhatsApp lets a business message someone only within 24 hours of their last message to it, unless the message is an approved **template**. For a message every evening, create a template with one variable (`{{1}}` = the summary) in Twilio/Meta, get it approved, and put its id in `TWILIO_WHATSAPP_CONTENT_SID`. You also need a WhatsApp-enabled sender number (Meta business verification). Swapping to another provider (e.g. Meta Cloud API) means replacing the one function `notify.send_whatsapp`.
-- **Without a provider nothing is sent by itself.** The message is still built and saved; Settings lists it as "not sent automatically" with an **Open in WhatsApp** button that opens a chat to the owner's own number with the text filled in; he taps send. 
-- *Send today's message now* in Settings sends a test immediately and does not use up the 9 PM message.
-- The scheduler runs inside the app process, so the app must be running at 9 PM. Set `NOTIFY_ENABLED=0` to disable it.
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/register` | Register a shop |
+| POST | `/api/login` | Owner login |
+| POST | `/api/demo` | Access demo shop |
+| GET / PUT | `/api/settings` | Manage settings |
+| GET / POST | `/api/products` | View and add products |
+| PUT / DELETE | `/api/products/{id}` | Edit and remove products |
+| PUT | `/api/customers/{id}` | Edit customer details |
+| POST | `/api/voice` | Process voice or text commands |
+| POST | `/api/confirm` | Confirm pending actions |
+| POST | `/api/cancel` | Cancel pending actions |
+| POST | `/api/quick` | Record instant sales |
+| POST | `/api/undo-sale/{id}` | Undo a sale |
+| GET | `/api/dashboard` | View business dashboard |
+| GET | `/api/customers` | View customer balances |
+| GET | `/api/inventory` | View stock |
+| GET | `/api/reminder/{id}` | Generate WhatsApp reminder |
+| POST | `/api/bill/parse` | Parse supplier bills |
+| POST | `/api/bill/confirm` | Confirm supplier bills |
+| GET | `/api/sales/daily?days=7` | View daily product-wise sales |
 
-## Languages: English and Hindi (Devanagari)
-- A header button switches the whole app between **English** and **हिन्दी**. The choice is remembered. All screen text, spoken replies, confirmations, errors, insights and WhatsApp reminder drafts come out in that one language (no Hinglish).
-- The language is sent as an `X-Lang: en|hi` header; the server's messages are in `backend/i18n.py`, the screen text is in the `S` object in `frontend/index.html`. Adding a language = adding one more column to both.
-- Voice input uses `hi-IN` or `en-IN` to match. Commands work in either language, e.g. “Add ₹50 credit for Ramesh”, “How much does Ramesh owe”, “Sold two cutting chai”, “रमेश के 50 रुपये उधार लिखो”, “रमेश का कितना बाकी है”, “आज का कुल 2700”.
-- **One customer, either script:** “Ramesh” and “रमेश” are the same customer (`names.py` compares a sound-based key, e.g. Imran/इमरान, Lakshmi/लक्ष्मी). The name is shown as first entered. Different people with very similar sounds could in theory collide: use *Edit* to rename. On first start an existing database is migrated and any English/Hindi duplicates are merged with their ledgers.
 
-## Daily product-wise sales
-`GET /api/sales/daily?days=7|14|30` returns, for each day, cups and sales amount per product plus totals and the best seller. Shown in the **Sales** tab. Manual day totals are not split by product and appear in their own column.
+Built by **Team Terabyte** (Sanchitha Poojari).
+
+
