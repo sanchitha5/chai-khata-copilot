@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Chai Khata</title>
+<style>
+:root{--bg:#faf3e6;--card:#fff;--ink:#3b2417;--mut:#7a6455;--line:#e6d6bf;--accent:#e67a1f;--ok:#2f7d4f;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#1f1510;--card:#2b1d15;--ink:#f6e8d6;--mut:#c2a98f;--line:#4a3426;--accent:#f39a47;--ok:#6fcf97;--bad:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:500 17px/1.5 system-ui,"Noto Sans Devanagari","Nirmala UI",sans-serif}
+main{max-width:560px;margin:auto;padding:14px 16px 40px}h1{margin:0;font-size:24px}.mut{color:var(--mut);font-size:15px}
+input,textarea,button{font:inherit;color:inherit}input,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card)}
+.btn{padding:10px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-weight:700;cursor:pointer}.pri{background:var(--accent);color:#1d1000;border-color:var(--accent)}.bad{color:var(--bad)}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}.row{display:flex;gap:8px;margin:8px 0;align-items:center}.sp{justify-content:space-between}
+#mic{width:128px;height:128px;border-radius:50%;border:0;background:var(--accent);font-size:42px;display:block;margin:12px auto;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.15)}#mic.on{outline:6px solid var(--bad)}
+nav{display:flex;border-bottom:2px solid var(--line)}nav button{flex:1;background:none;border:0;padding:10px 2px;font-weight:700;color:var(--mut);border-bottom:4px solid transparent;cursor:pointer}nav button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.stat{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px}.stat b{display:block;font-size:24px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:80px}.bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0}
+.ins{border-left:5px solid var(--line);padding:4px 0 4px 10px;margin:10px 0}.ins.warn{border-color:var(--accent)}.ins.critical{border-color:var(--bad)}.ins small{display:block;color:var(--mut)}
+.line{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}a.btn{text-decoration:none;display:inline-block;padding:4px 12px;font-size:15px}
+#st{min-height:28px;text-align:center}#st.bad{color:var(--bad)}#st.ok{color:var(--ok)}[hidden]{display:none!important}.qb{font-size:20px;padding:16px 8px}
+.tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:15px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:top}th:first-child,td:first-child{text-align:left}.tot td{font-weight:700;border-top:2px solid var(--line)}
+nav button{font-size:14px;padding:10px 0}.fld{display:block;margin:8px 0}.fld>span{display:block;font-size:14px;color:var(--mut)}select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font:inherit;color:inherit}.msgb{white-space:pre-wrap;font-size:14px}.ok{color:var(--ok)}
+</style></head><body><main>
+<div class="row sp"><h1 data-i="brand"></h1><span><span class="mut" id="net"></span> <button class="btn" id="lg"></button> <button class="btn" id="out" data-i="logout" hidden></button></span></div>
+<section id="auth"><p class="mut" data-i="tag"></p>
+<div class="card"><input id="shop" data-p="shop"><div class="row"><input id="ph" type="tel" data-p="phone"><input id="pw" type="password" data-p="pass"></div>
+<div class="row"><button class="btn pri" id="login" data-i="login"></button><button class="btn" id="reg" data-i="register"></button></div><div id="aerr" class="bad"></div></div>
+<button class="btn" id="demo" style="width:100%" data-i="demo"></button></section>
+<section id="app" hidden>
+<button id="mic" aria-label="Mic">🎙️</button><div id="st" role="status" aria-live="polite"></div>
+<div class="row"><input id="tx" data-p="type"><button class="btn pri" id="go" data-i="send"></button></div>
+<label class="row mut"><input type="checkbox" id="hf" style="width:auto"><span data-i="hf"></span></label>
+<div id="hfb" class="card" hidden style="border-color:var(--bad)"><div class="row sp"><b data-i="hfon"></b><button class="btn bad" id="hfs" data-i="hfstop"></button></div></div>
+<div id="conf" class="card" hidden></div>
+<div class="card"><b data-i="quick"></b><div class="stats" id="qk"></div><p class="mut" data-i="quickhint"></p></div>
+<nav><button data-t="today" aria-selected="true" data-i="t_today"></button><button data-t="cust" aria-selected="false" data-i="t_cust"></button><button data-t="inv" aria-selected="false" data-i="t_inv"></button><button data-t="sales" aria-selected="false" data-i="t_sales"></button><button data-t="bill" aria-selected="false" data-i="t_bill"></button><button data-t="set" aria-selected="false" data-i="t_set"></button></nav>
+<section id="p-today"></section><section id="p-cust" hidden></section><section id="p-inv" hidden></section><section id="p-sales" hidden></section><section id="p-set" hidden></section>
+<section id="p-bill" hidden><p class="mut" data-i="billhelp"></p><textarea id="bt" rows="5"></textarea><div class="row"><input id="sup" data-p="supplier"><button class="btn" id="bp" data-i="readbill"></button></div><div id="bo"></div></section>
+</section></main>
+<script>
+const S={en:{brand:'Chai Khata',tag:'Speak. Manage. Grow.',shop:'Shop name (only to register)',phone:'Phone number',pass:'Password',login:'Log in',register:'Register',demo:'Try with demo data (separate demo shop)',logout:'Log out',
+hint:'Press the mic and say: “Add ₹50 credit for Ramesh”',type:'Or type here…',send:'Send',quick:'Tap to record a sale',quickhint:'No need to say every cup: just tap.',
+t_today:'Today',t_cust:'Credit',t_inv:'Stock',t_bill:'Bill',ask:'Is this correct?',yes:'Yes, save',no:'No',newc:'New customer: ',big:'Large amount, please double-check.',
+listen:'Listening…',cancel:'Cancelled',done:'Done',undone:'Undone',undo:'Undo',nomic:'This browser has no voice input. Please type.',neterr:'Voice needs internet. Please type.',micerr:'Microphone problem. Try typing.',
+off:'Offline: the server is needed',err:'Something went wrong',
+s_rev:"Today's sales (revenue)",cups:'cups',cash:'cash',s_exp:'Recorded expenses',s_pr:'Estimated profit',p_ok:'Sales minus recorded expenses',p_inc:'Incomplete: no expenses recorded today',s_pend:'Credit pending',
+chart:'Sales, recent days',revnote:'Revenue is not profit.',adv:'Insights and alerts',fact:'Based on your data',est:'Estimate',noins:'Insights appear after a few days of data.',report:"Listen to today's report",
+rem:'Draft reminder',wa:'Open WhatsApp (you press send)',nocust:'No customers yet.',tomorrow:(n,d)=>`Tomorrow's estimate: ${n} cups (an estimate, from ${d} days of data).`,need:'tomorrow ~',
+billhelp:'Paste the bill text, one item per line like “Milk 20 x 30”. Camera scanning is not included in this version.',billdef:'Milk 20 x 30\nSugar 5 x 45\nTotal 825',supplier:'Supplier',readbill:'Read bill',unread:'Not read: ',total:'Total',mismatch:"(does not match the bill's total, please check)",
+okbill:'Looks right, save',billsaved:'Bill saved. Stock and expenses updated.',stockin:'stock: ',notstock:'not in stock list',units:{packet:'packets',kg:'kg',pcs:'pcs'},
+t_sales:'Sales',sdate:'Date',stotal:'Total',srange:n=>`Last ${n} days`,sbest:(n,q)=>`Best seller in this period: ${n} (${q} cups)`,snone:'No sales in this period.',snote:'Each cell shows cups and sales amount.',
+hf:'Hands-free mode (stays on until you stop it, and turns off after 90 seconds of silence)',hfon:'Hands-free is ON. Just speak.',hfstop:'Stop',hfoff:'Hands-free stopped',hfidle:'Hands-free turned off after silence',askagain:'Please say yes or no.',taptoconfirm:'Please tap Yes or No on the screen.',tapbig:'Please tap Yes on the screen to confirm.',
+t_set:'Settings',edit:'Edit',save:'Save',c_cancel:'Cancel',saved2:'Saved',cname:'Name',cphone:'Phone (optional)',noprodq:'Add products in Settings to get tap buttons.',
+set_shop:'Shop and owner',f_shop:'Shop name',f_owner:'Owner name',f_phone:'Phone number (login and messages)',f_addr:'Address',f_curpw:'Current password (needed only to change the phone number)',
+set_pw:'Change password',f_oldpw:'Old password',f_newpw:'New password (6+ characters)',pwchanged:'Password changed',
+set_msg:'Daily message',f_notify:h=>`Every day at ${h%12||12}:00 ${h<12?'AM':'PM'}, send the day's sales to my own WhatsApp`,f_msglang:'Message language',
+nosms:'',testmsg:"Send today's message now",msgs:'Recent messages',nomsgs:'No messages yet.',testlbl:'Test message',
+st_sent:'sent',st_failed:'could not be sent',st_not_configured:'not sent automatically (WhatsApp not set up)',openwa:'Open in WhatsApp',st_sending:'sending',
+set_prod:'Products',add_prod:'Add product',p_name:'Name',p_hi:'Hindi name (optional)',p_price:'Price ₹',p_cost:'Cost ₹',p_costl:'cost',p_kw:'Other words you say (optional, separated by commas)',remove:'Remove',confirmrm:'Remove this product? Past sales stay in your records.',noprod:'No products yet. Add one below.',
+rep:d=>`Today ${d.orders} orders, ${d.cups} cups. Sales ${rs(d.revenue)}. Recorded expenses ${rs(d.expenses)}${d.expenses_recorded?'':' (incomplete)'}. Estimated profit ${rs(d.est_profit)}. Credit pending ${rs(d.pending_udhaar)}.`+(d.prediction?` Tomorrow's estimate: ${d.prediction.need.Milk} packets of milk.`:'')},
+hi:{brand:'चाय खाता',tag:'बोलिए। संभालिए। बढ़ाइए।',shop:'दुकान का नाम (सिर्फ़ रजिस्टर के लिए)',phone:'फ़ोन नंबर',pass:'पासवर्ड',login:'लॉग इन',register:'रजिस्टर करें',demo:'डेमो डेटा के साथ आज़माइए (अलग डेमो दुकान)',logout:'लॉग आउट',
+hint:'माइक दबाकर बोलिए: “रमेश के 50 रुपये उधार लिखो”',type:'या यहाँ लिखिए…',send:'भेजें',quick:'एक टैप में बिक्री दर्ज करें',quickhint:'हर कप बोलने की ज़रूरत नहीं: बस टैप कीजिए।',
+t_today:'आज',t_cust:'उधार',t_inv:'स्टॉक',t_bill:'बिल',ask:'क्या यह सही है?',yes:'हाँ, सेव करें',no:'नहीं',newc:'नया ग्राहक: ',big:'बड़ी रकम है, कृपया दोबारा जाँचिए।',
+listen:'सुन रहा हूँ…',cancel:'रद्द किया',done:'हो गया',undone:'वापस ले लिया',undo:'वापस लें',nomic:'इस ब्राउज़र में आवाज़ नहीं चलती। कृपया लिखिए।',neterr:'आवाज़ के लिए इंटरनेट चाहिए। कृपया लिखिए।',micerr:'माइक में दिक्कत है। लिखकर देखिए।',
+off:'ऑफ़लाइन: सर्वर चाहिए',err:'कुछ गड़बड़ हुई',
+s_rev:'आज की बिक्री (आमदनी)',cups:'कप',cash:'नकद',s_exp:'दर्ज खर्च',s_pr:'अनुमानित मुनाफ़ा',p_ok:'बिक्री में से दर्ज खर्च घटाकर',p_inc:'अधूरा: आज का खर्च दर्ज नहीं है',s_pend:'बाकी उधार',
+chart:'पिछले दिनों की बिक्री',revnote:'आमदनी और मुनाफ़ा एक चीज़ नहीं हैं।',adv:'सलाह और अलर्ट',fact:'आपके डेटा पर आधारित',est:'अनुमान',noins:'कुछ दिन का डेटा आने पर सलाह दिखेगी।',report:'आज की रिपोर्ट सुनिए',
+rem:'रिमाइंडर बनाइए',wa:'WhatsApp खोलिए (भेजना आपको है)',nocust:'अभी कोई ग्राहक नहीं।',tomorrow:(n,d)=>`कल का अनुमान: ${n} कप (अनुमान, ${d} दिन के डेटा से)।`,need:'कल ~',
+billhelp:'बिल का टेक्स्ट चिपकाइए, हर लाइन में एक आइटम, जैसे “दूध 20 x 30”। कैमरा स्कैन इस संस्करण में नहीं है।',billdef:'दूध 20 x 30\nचीनी 5 x 45\nकुल 825',supplier:'सप्लायर',readbill:'बिल पढ़िए',unread:'पढ़ा नहीं गया: ',total:'कुल',mismatch:'(बिल के कुल से मेल नहीं खाता, कृपया जाँचिए)',
+okbill:'सही है, सेव करें',billsaved:'बिल सेव हुआ। स्टॉक और खर्च अपडेट हो गए।',stockin:'स्टॉक: ',notstock:'स्टॉक सूची में नहीं',units:{packet:'पैकेट',kg:'किलो',pcs:'पीस'},
+t_sales:'बिक्री',sdate:'तारीख़',stotal:'कुल',srange:n=>`पिछले ${n} दिन`,sbest:(n,q)=>`इस अवधि में सबसे ज़्यादा बिका: ${n} (${q} कप)`,snone:'इस अवधि में कोई बिक्री नहीं।',snote:'हर खाने में कप और बिक्री की रकम दिखती है।',
+hf:'हैंड्स-फ़्री मोड (जब तक रोकें नहीं चलता रहेगा, और 90 सेकंड चुप रहने पर बंद हो जाएगा)',hfon:'हैंड्स-फ़्री चालू है। बस बोलिए।',hfstop:'रोकें',hfoff:'हैंड्स-फ़्री बंद किया',hfidle:'चुप रहने पर हैंड्स-फ़्री बंद हो गया',askagain:'कृपया हाँ या नहीं बोलिए।',taptoconfirm:'कृपया स्क्रीन पर हाँ या नहीं दबाइए।',tapbig:'पक्का करने के लिए कृपया स्क्रीन पर हाँ दबाइए।',
+t_set:'सेटिंग',edit:'बदलें',save:'सेव करें',c_cancel:'रद्द करें',saved2:'सेव हो गया',cname:'नाम',cphone:'फ़ोन (ज़रूरी नहीं)',noprodq:'टैप बटन के लिए सेटिंग में प्रोडक्ट जोड़िए।',
+set_shop:'दुकान और मालिक',f_shop:'दुकान का नाम',f_owner:'मालिक का नाम',f_phone:'फ़ोन नंबर (लॉग इन और मैसेज के लिए)',f_addr:'पता',f_curpw:'मौजूदा पासवर्ड (सिर्फ़ फ़ोन नंबर बदलने पर चाहिए)',
+set_pw:'पासवर्ड बदलें',f_oldpw:'पुराना पासवर्ड',f_newpw:'नया पासवर्ड (6+ अक्षर)',pwchanged:'पासवर्ड बदल गया',
+set_msg:'रोज़ का मैसेज',f_notify:h=>`रोज़ ${h}:00 बजे दिन की बिक्री का हिसाब मेरे अपने WhatsApp पर भेजिए`,f_msglang:'मैसेज की भाषा',
+nosms:'सर्वर पर अपने-आप WhatsApp भेजना अभी सेट नहीं है, इसलिए कुछ अपने-आप नहीं जाता। हर दिन का मैसेज नीचे सेव होता है: खुद को भेजने के लिए “WhatsApp में खोलें” दबाइए। README देखिए।',testmsg:'आज का मैसेज अभी भेजिए',msgs:'हाल के मैसेज',nomsgs:'अभी कोई मैसेज नहीं।',testlbl:'टेस्ट मैसेज',
+st_sent:'भेजा गया',st_failed:'भेजा नहीं जा सका',st_not_configured:'अपने-आप नहीं भेजा गया (WhatsApp सेट नहीं है)',openwa:'WhatsApp में खोलें',st_sending:'भेज रहे हैं',
+set_prod:'प्रोडक्ट',add_prod:'प्रोडक्ट जोड़ें',p_name:'नाम',p_hi:'हिन्दी नाम (ज़रूरी नहीं)',p_price:'कीमत ₹',p_cost:'लागत ₹',p_costl:'लागत',p_kw:'बोलने के और शब्द (ज़रूरी नहीं, कॉमा से अलग)',remove:'हटाएँ',confirmrm:'यह प्रोडक्ट हटाएँ? पुरानी बिक्री आपके रिकॉर्ड में रहेगी।',noprod:'अभी कोई प्रोडक्ट नहीं। नीचे जोड़िए।',
+rep:d=>`आज ${d.orders} ऑर्डर, ${d.cups} कप। बिक्री ${rs(d.revenue)}। दर्ज खर्च ${rs(d.expenses)}${d.expenses_recorded?'':' (अधूरा)'}। अनुमानित मुनाफ़ा ${rs(d.est_profit)}। बाकी उधार ${rs(d.pending_udhaar)}।`+(d.prediction?` कल के लिए अनुमान: ${d.prediction.need.Milk} पैकेट दूध।`:'')}};
+const NM={Chai:['Chai','चाय'],'Cutting chai':['Cutting chai','कटिंग चाय'],'Masala chai':['Masala chai','मसाला चाय'],Coffee:['Coffee','कॉफ़ी'],Milk:['Milk','दूध'],Sugar:['Sugar','चीनी'],Patti:['Tea powder','चायपत्ती'],Cups:['Cups','कप'],'Manual total':['Manual total (estimated)','मैन्युअल कुल (अनुमानित)']};
+const $=s=>document.querySelector(s),rs=p=>'₹'+Math.round(p)/100,esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let T=localStorage.getItem('t'),LG=localStorage.getItem('lg')||(navigator.language||'').toLowerCase().startsWith('hi')?'hi':'en',PID=null,DATA=null,PRD=[],CS=[],EC=null,EP=null,SET=null;
+if(localStorage.getItem('lg'))LG=localStorage.getItem('lg');
+const t=k=>S[LG][k],nm=n=>(NM[n]||[n,n])[LG==='hi'?1:0],VL=()=>LG==='hi'?'hi-IN':'en-IN';
+function applyLang(){document.documentElement.lang=LG;document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));document.querySelectorAll('[data-p]').forEach(e=>e.placeholder=t(e.dataset.p));
+ $('#lg').textContent=LG==='hi'?'English':'हिन्दी';$('#bt').value=t('billdef');if(!$('#st').dataset.busy)note(t('hint'));
+ document.querySelectorAll('#qk button').forEach(b=>b.textContent=nm(b.dataset.n)+' ₹'+b.dataset.p);net();if(T){refresh();if(!$('#p-set').hidden)rSet()}}
+$('#lg').onclick=()=>{LG=LG==='hi'?'en':'hi';localStorage.setItem('lg',LG);$('#conf').hidden=true;applyLang()};
+async function api(p,b,m){const r=await fetch('/api'+p,{method:m||(b?'POST':'GET'),headers:{'Content-Type':'application/json','X-Lang':LG,...(T?{Authorization:'Bearer '+T}:{})},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));
+ if(r.status===401&&T){T=null;localStorage.removeItem('t');view()}if(!r.ok)throw new Error(j.detail||t('err'));return j}
+const note=(m,c)=>{const e=$('#st');e.textContent=m;e.className=c||'';e.dataset.busy=c||m===t('hint')?'':'1'};
+function speak(x){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(x);u.lang=VL();speechSynthesis.speak(u)}catch(e){}}
+function view(){$('#auth').hidden=!!T;$('#app').hidden=!T;$('#out').hidden=!T;if(T){note(t('hint'));refresh()}}
+async function enter(p,b){try{const j=await api(p,b);T=j.token;localStorage.setItem('t',T);view()}catch(e){$('#aerr').textContent=e.message}}
+$('#login').onclick=()=>enter('/login',{phone:$('#ph').value,password:$('#pw').value});
+$('#reg').onclick=()=>enter('/register',{shop:$('#shop').value,phone:$('#ph').value,password:$('#pw').value});
+$('#demo').onclick=()=>enter('/demo',{});$('#out').onclick=()=>{T=null;localStorage.removeItem('t');view()};
+let HF=false,LAST=0,WAIT=null,got=false,rec,on=false;const IDLE=90000;
+const YES=/\b(yes|yeah|yep|ok|okay|correct|right|save|sure)\b|हाँ|हां|जी|ठीक|सही|सेव/i,NO=/\b(no|nope|cancel|wrong)\b|नहीं|नही|गलत|ग़लत|रद्द|कैंसल/i;
+const yn=x=>NO.test(x||'')?'no':YES.test(x||'')?'yes':null;
+function speakCb(x,cb){let d=false;const f=()=>{if(!d){d=true;cb&&cb()}};
+ try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(x);u.lang=VL();u.onend=f;u.onerror=f;speechSynthesis.speak(u);setTimeout(f,Math.min(12000,x.length*110+2500))}catch(e){f()}}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function ui(){$('#mic').classList.toggle('on',on);$('#hfb').hidden=!HF}
+function listen(cb){
+ if(!SR){note(t('nomic'),'bad');stopHF();return}
+ try{speechSynthesis.cancel()}catch(e){}
+ rec=new SR();rec.lang=VL();rec.interimResults=true;got=false;
+ rec.onstart=()=>{on=true;ui();if(!WAIT)note(t('listen'),'ok')};
+ rec.onresult=e=>{let x='';for(const r of e.results)x+=r[0].transcript;$('#tx').value=x;if(e.results[e.results.length-1].isFinal&&!got){got=true;cb(x)}};
+ rec.onerror=e=>{if(['network','not-allowed','service-not-allowed'].includes(e.error)){stopHF();note(e.error==='network'?t('neterr'):t('micerr'),'bad')}};
+ rec.onend=()=>{on=false;ui();if(!got&&HF)cb(null)};
+ try{rec.start()}catch(e){on=false}}
+function cmd(x){if(!HF)return;if(x==null){if(Date.now()-LAST>IDLE)stopHF(true);else listen(cmd);return}LAST=Date.now();send(x)}
+function resume(){if(HF){WAIT=null;LAST=Date.now();listen(cmd)}}
+function startHF(){HF=true;LAST=Date.now();ui();listen(cmd)}
+function stopHF(idle){const was=HF;HF=false;WAIT=null;try{rec&&rec.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}ui();if(was)note(t(idle===true?'hfidle':'hfoff'),'')}
+function askYN(tries){const w=WAIT={};listen(x=>{if(WAIT!==w)return;const a=x?yn(x):null;
+ if(a==='yes'){WAIT=null;doYes()}else if(a==='no'){WAIT=null;doNo()}
+ else if(tries<1)speakCb(t('askagain'),()=>{if(WAIT===w)askYN(tries+1)});else{WAIT=null;note(t('taptoconfirm'),'');speakCb(t('taptoconfirm'))}})}
+function showCard(r){$('#conf').hidden=false;$('#conf').innerHTML=`<b>${t('ask')}</b>`+r.lines.map(l=>`<div class="line">${esc(l)}</div>`).join('')+(r.new_customers.length?`<p class="mut">${t('newc')}${esc(r.new_customers.join(', '))}</p>`:'')+(r.warn_big?`<p class="bad">${t('big')}</p>`:'')+`<div class="row"><button class="btn pri" id="yes" style="flex:1">${t('yes')}</button><button class="btn bad" id="no" style="flex:1">${t('no')}</button></div>`;
+ $('#yes').onclick=()=>doYes();$('#no').onclick=doNo}
+async function send(x){x=(x||'').trim();if(!x){resume();return}$('#tx').value=x;
+ try{const r=await api('/voice',{text:x});
+  if(!r.needs_confirmation){note(r.reply,'ok');speakCb(r.reply,resume);return}
+  PID=r.pending_id;
+  if(r.auto_ok){await doYes(true);return}
+  showCard(r);note(r.reply,'ok');
+  if(!HF)speak(r.reply);else if(r.warn_big)speakCb(r.reply+' '+t('tapbig'));else speakCb(r.reply,()=>askYN(0))}
+ catch(e){note(e.message,'bad');speakCb(e.message,resume)}}
+async function doYes(auto){WAIT=null;try{rec&&rec.stop()}catch(e){}
+ try{const c=await api('/confirm',{pending_id:PID});$('#conf').hidden=true;$('#tx').value='';const ids=c.sale_ids||[],m=c.reply||t('done');
+  if(auto&&ids.length){const s=$('#st');s.className='ok';s.dataset.busy='';s.innerHTML=esc(m)+` <button class="btn" id="ud">${t('undo')}</button>`;
+   $('#ud').onclick=async()=>{try{await Promise.all(ids.map(i=>api('/undo-sale/'+i,{})));note(t('undone'),'ok');refresh()}catch(e){note(e.message,'bad')}}}else note(m,'ok');
+  refresh();speakCb(m,resume)}catch(e){note(e.message,'bad');speakCb(e.message,resume)}}
+async function doNo(){WAIT=null;try{rec&&rec.stop()}catch(e){}try{await api('/cancel',{pending_id:PID})}catch(e){}$('#conf').hidden=true;note(t('cancel'),'ok');speakCb(t('cancel'),resume)}
+$('#go').onclick=()=>send($('#tx').value);$('#tx').onkeydown=e=>{if(e.key==='Enter')send($('#tx').value)};
+$('#hfs').onclick=()=>{$('#hf').checked=false;stopHF()};$('#hf').onchange=()=>{if(!$('#hf').checked&&HF)stopHF()};
+$('#mic').onclick=()=>{if($('#hf').checked){HF?stopHF():startHF();return}
+ if(!SR){note(t('nomic'),'bad');return}if(on){rec.stop();return}listen(x=>{if(x)send(x)})};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));['today','cust','inv','sales','bill','set'].forEach(n=>$('#p-'+n).hidden=n!==b.dataset.t);if(b.dataset.t==='set'){EP=null;rSet()}});
+async function refresh(){try{PRD=await api('/products');PRD.forEach(p=>NM[p.name]=[p.name,p.name_hi||p.name]);buildQuick();const d=DATA=await api('/dashboard'),mx=Math.max(1,...d.chart.map(x=>x.rev));
+ $('#p-today').innerHTML=`<div class="stats"><div class="stat"><span class="mut">${t('s_rev')}</span><b>${rs(d.revenue)}</b><span class="mut">${d.cups} ${t('cups')} · ${t('cash')} ${rs(d.cash)} · UPI ${rs(d.upi)}</span></div>
+ <div class="stat"><span class="mut">${t('s_exp')}</span><b>${rs(d.expenses)}</b></div><div class="stat"><span class="mut">${t('s_pr')}</span><b>${rs(d.est_profit)}</b><span class="mut">${t(d.expenses_recorded?'p_ok':'p_inc')}</span></div><div class="stat"><span class="mut">${t('s_pend')}</span><b>${rs(d.pending_udhaar)}</b></div></div>
+ <div class="card"><b>${t('chart')}</b><div class="bars">${d.chart.map(x=>`<i style="height:${x.rev/mx*100}%" title="${x.d}: ${rs(x.rev)}"></i>`).join('')}</div><p class="mut">${t('revnote')}</p></div>
+ <div class="card"><b>${t('adv')}</b>${d.insights.map(i=>`<div class="ins ${i.sev}"><small>${t(i.type==='fact'?'fact':'est')}</small>${esc(i.text)}</div>`).join('')||`<p class="mut">${t('noins')}</p>`}</div><button class="btn" id="rep">${t('report')}</button>`;
+ $('#rep').onclick=()=>speak(t('rep')(d));
+ CS=await api('/customers');rCust();
+ const iv=await api('/inventory');$('#p-inv').innerHTML=(d.prediction?`<p class="mut">${t('tomorrow')(d.prediction.cups,d.prediction.days)}</p>`:'')+iv.map(i=>`<div class="line"><span>${nm(i.item)}</span><span><b>${i.qty} ${t('units')[i.unit]}</b> <span class="mut">${i.need_tomorrow==null?'':t('need')+i.need_tomorrow}</span></span></div>`).join('');await rSales()}catch(e){}}
+let RANGE=14;
+async function rSales(){const d=await api('/sales/daily?days='+RANGE),loc=LG==='hi'?'hi-IN':'en-IN';
+ const fmt=s=>new Date(s+'T00:00:00').toLocaleDateString(loc,{day:'numeric',month:'short',weekday:'short'});
+ const cell=x=>x&&x.qty?`<b>${+x.qty.toFixed(1)}</b><br><span class="mut">${rs(x.rev)}</span>`:'<span class="mut">–</span>';
+ const sel=[7,14,30].map(n=>`<button class="btn ${n===RANGE?'pri':''}" data-rg="${n}">${t('srange')(n)}</button>`).join(' ');
+ $('#p-sales').innerHTML=`<div class="row" style="flex-wrap:wrap">${sel}</div>`+(d.best?`<p>${t('sbest')(nm(d.best),+d.totals[d.best].qty.toFixed(1))}</p>`:`<p class="mut">${t('snone')}</p>`)+
+ `<div class="tbl"><table><thead><tr><th>${t('sdate')}</th>${d.products.map(p=>`<th>${nm(p)}</th>`).join('')}<th>${t('stotal')}</th></tr></thead><tbody>`+
+ d.days.map(r=>`<tr><td>${fmt(r.date)}</td>${d.products.map(p=>`<td>${cell(r.items[p])}</td>`).join('')}<td>${cell({qty:r.qty,rev:r.rev})}</td></tr>`).join('')+
+ `<tr class="tot"><td>${t('stotal')}</td>${d.products.map(p=>`<td>${cell(d.totals[p])}</td>`).join('')}<td>${cell({qty:d.qty,rev:d.rev})}</td></tr></tbody></table></div><p class="mut">${t('snote')}</p>`;
+ document.querySelectorAll('[data-rg]').forEach(b=>b.onclick=()=>{RANGE=+b.dataset.rg;rSales()})}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+function done(m,r){$('#st').className='ok';$('#st').dataset.busy='';$('#st').innerHTML=esc(m)+(r.sale_id?` <button class="btn" id="ud">${t('undo')}</button>`:'');
+ if(r.sale_id)$('#ud').onclick=async()=>{try{await api('/undo-sale/'+r.sale_id,{});note(t('undone'),'ok');refresh()}catch(e){note(e.message,'bad')}};refresh()}
+function buildQuick(){const q=$('#qk');q.innerHTML=PRD.length?'':`<p class="mut">${t('noprodq')}</p>`;
+ PRD.forEach(p=>{const b=document.createElement('button');b.className='btn pri qb';b.dataset.n=p.name;b.dataset.p=p.price;b.textContent=nm(p.name)+' ₹'+p.price;
+  b.onclick=async()=>{try{const r=await api('/quick',{item:p.name,key:uid()});done(nm(p.name)+' +1 ✓',r)}catch(e){note(e.message,'bad')}};q.append(b)})}
+$('#bp').onclick=async()=>{try{const r=await api('/bill/parse',{text:$('#bt').value});$('#bo').innerHTML=r.items.map(i=>`<div class="line"><span>${esc(i.item)} ${i.qty} x ${i.price}</span><span class="mut">${i.stock_item?t('stockin')+nm(i.stock_item):t('notstock')}</span></div>`).join('')+`<p>${t('total')} ₹${r.total}${r.total_mismatch?` <b class="bad">${t('mismatch')}</b>`:''}</p>${r.unread_lines.length?`<p class="mut">${t('unread')}${esc(r.unread_lines.join(' | '))}</p>`:''}<button class="btn pri" id="bc">${t('okbill')}</button>`;
+ $('#bc').onclick=async()=>{try{await api('/bill/confirm',{text:$('#bt').value,supplier:$('#sup').value});$('#bo').innerHTML=`<p class="mut">${t('billsaved')}</p>`;refresh()}catch(e){$('#bo').innerHTML=`<p class="bad">${esc(e.message)}</p>`}}}catch(e){$('#bo').textContent=e.message}};
+const net=()=>$('#net').textContent=navigator.onLine?'':t('off');addEventListener('online',net);addEventListener('offline',net);
+
+function rCust(){$('#p-cust').innerHTML=CS.map(c=>c.id===EC?`<div class="card"><label class="fld"><span>${t('cname')}</span><input id="ce-n" value="${esc(c.name)}" maxlength="40"></label><label class="fld"><span>${t('cphone')}</span><input id="ce-p" type="tel" value="${esc(c.phone||'')}"></label><div class="row"><button class="btn pri" data-cs="${c.id}">${t('save')}</button><button class="btn" data-cc="1">${t('c_cancel')}</button></div><div class="bad" id="ce-e"></div></div>`
+ :`<div class="line"><span>${esc(c.name)}${c.phone?`<small class="mut" style="display:block">${esc(c.phone)}</small>`:''}</span><span><b>${rs(c.balance)}</b> ${c.balance>0?`<button class="btn" data-r="${c.id}">${t('rem')}</button>`:''} <button class="btn" data-ce="${c.id}">${t('edit')}</button></span></div>`).join('')||`<p class="mut">${t('nocust')}</p>`;
+ document.querySelectorAll('[data-r]').forEach(b=>b.onclick=async()=>{const r=await api('/reminder/'+b.dataset.r);b.outerHTML=`<a class="btn pri" target="_blank" rel="noopener" href="${r.whatsapp_link}">${t('wa')}</a>`});
+ document.querySelectorAll('[data-ce]').forEach(b=>b.onclick=()=>{EC=+b.dataset.ce;rCust()});
+ const cc=$('#p-cust [data-cc]');if(cc)cc.onclick=()=>{EC=null;rCust()};
+ const cs=$('#p-cust [data-cs]');if(cs)cs.onclick=async()=>{try{await api('/customers/'+cs.dataset.cs,{name:$('#ce-n').value,phone:$('#ce-p').value},'PUT');EC=null;note(t('saved2'),'ok');refresh()}catch(e){$('#ce-e').textContent=e.message}}}
+const waNum=p=>{const d=String(p||'').replace(/\D/g,'');return d.length===10?'91'+d:d},digits=x=>String(x||'').replace(/\D/g,''),fmsg=(id,m,ok)=>{const e=$('#'+id);if(e){e.textContent=m;e.className=ok?'ok':'bad'}};
+const prodForm=p=>`<div class="card" data-pf="${p?p.id:0}"><label class="fld"><span>${t('p_name')}</span><input data-f="name" value="${esc(p?p.name:'')}" maxlength="30"></label>
+ <label class="fld"><span>${t('p_hi')}</span><input data-f="name_hi" value="${esc(p?p.name_hi:'')}" maxlength="30"></label>
+ <div class="row"><label class="fld" style="flex:1"><span>${t('p_price')}</span><input data-f="price" type="number" inputmode="decimal" value="${p?p.price:''}"></label><label class="fld" style="flex:1"><span>${t('p_cost')}</span><input data-f="cost" type="number" inputmode="decimal" value="${p?p.cost:''}"></label></div>
+ <label class="fld"><span>${t('p_kw')}</span><input data-f="keywords" value="${esc(p?p.keywords:'')}"></label>
+ <div class="row"><button class="btn pri" data-ps="1">${p?t('save'):t('add_prod')}</button>${p?`<button class="btn" data-pc="1">${t('c_cancel')}</button>`:''}</div><div class="bad" data-perr="1"></div></div>`;
+async function putShop(over){const b={shop:SET.shop,owner:SET.owner,address:SET.address,phone:SET.phone,notify:SET.notify,lang:SET.lang,password:'',...over};await api('/settings/shop',b,'PUT');Object.assign(SET,{shop:b.shop,owner:b.owner,address:b.address,phone:digits(b.phone)||SET.phone,notify:b.notify,lang:b.lang})}
+async function rSet(){let P;try{SET=await api('/settings');P=PRD=await api('/products')}catch(e){$('#p-set').textContent=e.message;return}
+ const s=SET,box=s.outbox.map(m=>`<div class="line" style="display:block"><b>${esc(m.day.startsWith('test')?t('testlbl'):m.day)}</b> <span class="mut">· ${t('st_'+m.status)}</span><div class="msgb mut">${esc(m.body)}</div>${m.status==='sent'?'':`<a class="btn pri" target="_blank" rel="noopener" href="https://wa.me/${waNum(s.phone)}?text=${encodeURIComponent(m.body)}">${t('openwa')}</a>`}</div>`).join('')||`<p class="mut">${t('nomsgs')}</p>`;
+ $('#p-set').innerHTML=`<div class="card"><b>${t('set_shop')}</b>
+ <label class="fld"><span>${t('f_shop')}</span><input id="s-shop" value="${esc(s.shop)}" maxlength="60"></label>
+ <label class="fld"><span>${t('f_owner')}</span><input id="s-owner" value="${esc(s.owner)}" maxlength="60"></label>
+ <label class="fld"><span>${t('f_phone')}</span><input id="s-ph" type="tel" value="${esc(s.phone)}" ${s.is_demo?'disabled':''}></label>
+ <label class="fld" id="s-pwb" hidden><span>${t('f_curpw')}</span><input id="s-pw" type="password"></label>
+ <label class="fld"><span>${t('f_addr')}</span><input id="s-ad" value="${esc(s.address)}" maxlength="200"></label>
+ <button class="btn pri" id="s-save">${t('save')}</button> <span id="s-msg"></span></div>
+ <div class="card"><b>${t('set_msg')}</b>
+ <label class="row"><input type="checkbox" id="s-nt" style="width:auto" ${s.notify?'checked':''}><span>${t('f_notify')(s.notify_hour)}</span></label>
+ <label class="fld"><span>${t('f_msglang')}</span><select id="s-lang"><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
+ ${s.wa_configured?'':`<p class="bad">${t('nosms')}</p>`}
+ <button class="btn" id="s-test">${t('testmsg')}</button> <span id="s-tmsg"></span>
+ <p class="mut" style="margin-bottom:0">${t('msgs')}</p>${box}</div>
+ <div class="card"><b>${t('set_pw')}</b><label class="fld"><span>${t('f_oldpw')}</span><input id="s-op" type="password"></label><label class="fld"><span>${t('f_newpw')}</span><input id="s-np" type="password"></label>
+ <button class="btn" id="s-pwsave">${t('set_pw')}</button> <span id="s-pmsg"></span></div>
+ <div class="card"><b>${t('set_prod')}</b>${P.map(p=>p.id===EP?prodForm(p):`<div class="line"><span>${esc(p.name)}${p.name_hi?` <span class="mut">(${esc(p.name_hi)})</span>`:''}<small class="mut" style="display:block">₹${p.price} · ${t('p_costl')} ₹${p.cost}</small></span><span><button class="btn" data-pe="${p.id}">${t('edit')}</button> <button class="btn bad" data-pd="${p.id}">${t('remove')}</button></span></div>`).join('')||`<p class="mut">${t('noprod')}</p>`}
+ <p style="margin:14px 0 0"><b>${t('add_prod')}</b></p>${prodForm(null)}</div>`;
+ $('#s-lang').value=s.lang;
+ $('#s-ph').oninput=()=>{$('#s-pwb').hidden=digits($('#s-ph').value)===digits(s.phone)};
+ $('#s-save').onclick=async()=>{try{await putShop({shop:$('#s-shop').value,owner:$('#s-owner').value,address:$('#s-ad').value,phone:$('#s-ph').value,password:$('#s-pw').value});$('#s-pw').value='';$('#s-pwb').hidden=true;fmsg('s-msg',t('saved2'),1)}catch(e){fmsg('s-msg',e.message)}};
+ $('#s-nt').onchange=async()=>{try{await putShop({notify:$('#s-nt').checked});fmsg('s-tmsg',t('saved2'),1)}catch(e){fmsg('s-tmsg',e.message)}};
+ $('#s-lang').onchange=async()=>{try{await putShop({lang:$('#s-lang').value});fmsg('s-tmsg',t('saved2'),1)}catch(e){fmsg('s-tmsg',e.message)}};
+ $('#s-test').onclick=async()=>{try{await api('/settings/test-message',{});await rSet()}catch(e){fmsg('s-tmsg',e.message)}};
+ $('#s-pwsave').onclick=async()=>{try{await api('/settings/password',{old:$('#s-op').value,new:$('#s-np').value});$('#s-op').value=$('#s-np').value='';fmsg('s-pmsg',t('pwchanged'),1)}catch(e){fmsg('s-pmsg',e.message)}};
+ document.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{EP=+b.dataset.pe;rSet()});
+ document.querySelectorAll('[data-pc]').forEach(b=>b.onclick=()=>{EP=null;rSet()});
+ document.querySelectorAll('[data-pd]').forEach(b=>b.onclick=async()=>{if(!confirm(t('confirmrm')))return;try{await api('/products/'+b.dataset.pd,null,'DELETE');EP=null;await rSet();refresh()}catch(e){note(e.message,'bad')}});
+ document.querySelectorAll('[data-ps]').forEach(b=>b.onclick=async()=>{const f=b.closest('[data-pf]'),v={};f.querySelectorAll('[data-f]').forEach(i=>v[i.dataset.f]=i.value);
+  const id=+f.dataset.pf;try{await api(id?'/products/'+id:'/products',{name:v.name,name_hi:v.name_hi,price:parseFloat(v.price)||0,cost:parseFloat(v.cost)||0,keywords:v.keywords},id?'PUT':'POST');EP=null;await rSet();refresh()}catch(e){f.querySelector('[data-perr]').textContent=e.message}})}
+applyLang();view();
+</script></body></html>

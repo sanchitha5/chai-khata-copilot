@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Chai Khata Copilot</title>
+<style>
+:root{--bg:#faf3e6;--card:#fff;--ink:#3b2417;--mut:#7a6455;--line:#e6d6bf;--accent:#e67a1f;--ok:#2f7d4f;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#1f1510;--card:#2b1d15;--ink:#f6e8d6;--mut:#c2a98f;--line:#4a3426;--accent:#f39a47;--ok:#6fcf97;--bad:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:500 17px/1.45 system-ui,"Noto Sans Devanagari",sans-serif}
+main{max-width:560px;margin:auto;padding:14px 16px 40px}h1{margin:0;font-size:24px}.mut{color:var(--mut);font-size:15px}
+input,textarea,button{font:inherit;color:inherit}input,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card)}
+.btn{padding:10px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-weight:700;cursor:pointer}.pri{background:var(--accent);color:#1d1000;border-color:var(--accent)}.bad{color:var(--bad)}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}.row{display:flex;gap:8px;margin:8px 0}
+#mic{width:128px;height:128px;border-radius:50%;border:0;background:var(--accent);font-size:42px;display:block;margin:12px auto;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.15)}#mic.on{outline:6px solid var(--bad)}
+nav{display:flex;border-bottom:2px solid var(--line)}nav button{flex:1;background:none;border:0;padding:10px 2px;font-weight:700;color:var(--mut);border-bottom:4px solid transparent;cursor:pointer}nav button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px}.stat b{display:block;font-size:24px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:80px}.bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0}
+.ins{border-left:5px solid var(--line);padding:4px 0 4px 10px;margin:10px 0}.ins.warn{border-color:var(--accent)}.ins.critical{border-color:var(--bad)}.ins small{display:block;color:var(--mut)}
+.line{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}a.btn{text-decoration:none;display:inline-block;padding:4px 12px;font-size:15px}
+#st{min-height:26px;text-align:center}#st.bad{color:var(--bad)}#st.ok{color:var(--ok)}[hidden]{display:none!important}
+</style></head><body><main>
+<section id="auth"><h1>Chai Khata Copilot</h1><p class="mut">Speak. Manage. Grow.</p>
+<div class="card"><input id="shop" placeholder="Dukaan ka naam (sirf register ke liye)"><div class="row"><input id="ph" type="tel" placeholder="Phone"><input id="pw" type="password" placeholder="Password"></div>
+<div class="row"><button class="btn pri" id="login">Login</button><button class="btn" id="reg">Register</button></div><div id="aerr" class="mut"></div></div>
+<button class="btn" id="demo" style="width:100%">Demo data ke saath try karein (alag demo dukaan)</button></section>
+<section id="app" hidden>
+<div class="row" style="justify-content:space-between;align-items:center"><h1>Chai Khata</h1><span><span class="mut" id="net"></span> <button class="btn" id="out">Logout</button></span></div>
+<button id="mic" aria-label="Bolein">🎙️</button><div id="st" role="status" aria-live="polite">Dabake boliye: “Ramesh ko 50 rupaye udhaar likho”</div>
+<div class="row"><input id="tx" placeholder="Ya yahan likhein…"><button class="btn pri" id="go">Bhejo</button><button class="btn" id="lang">हिं</button></div>
+<div id="conf" class="card" hidden></div>
+<nav><button data-t="today" aria-selected="true">Aaj</button><button data-t="cust" aria-selected="false">Khata</button><button data-t="inv" aria-selected="false">Stock</button><button data-t="bill" aria-selected="false">Bill</button></nav>
+<section id="p-today"></section><section id="p-cust" hidden></section><section id="p-inv" hidden></section>
+<section id="p-bill" hidden><p class="mut">Bill ka text paste karein, har line: “Doodh 20 x 30”. Camera OCR is version mein shaamil nahi hai.</p><textarea id="bt" rows="5">Doodh 20 x 30
+Sugar 5 x 45
+Total 825</textarea><div class="row"><input id="sup" placeholder="Supplier"><button class="btn" id="bp">Padho</button></div><div id="bo"></div></section>
+</section></main>
+<script>
+const $=s=>document.querySelector(s),rs=p=>'₹'+(p/100),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let T=localStorage.getItem('t'),lang='hi-IN',PID=null;
+async function api(p,b){const r=await fetch('/api'+p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));
+ if(r.status===401&&T){T=null;localStorage.removeItem('t');view()}if(!r.ok)throw new Error(j.detail||'Kuch gadbad hui');return j}
+const note=(m,c)=>{$('#st').textContent=m;$('#st').className=c||''};
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=lang;speechSynthesis.speak(u)}catch(e){}}
+function view(){$('#auth').hidden=!!T;$('#app').hidden=!T;if(T)refresh()}
+async function enter(p,b){try{const j=await api(p,b);T=j.token;localStorage.setItem('t',T);view()}catch(e){$('#aerr').textContent=e.message}}
+$('#login').onclick=()=>enter('/login',{phone:$('#ph').value,password:$('#pw').value});
+$('#reg').onclick=()=>enter('/register',{shop:$('#shop').value,phone:$('#ph').value,password:$('#pw').value});
+$('#demo').onclick=()=>enter('/demo',{});
+$('#out').onclick=()=>{T=null;localStorage.removeItem('t');view()};
+async function send(text){text=text.trim();if(!text)return;$('#tx').value=text;
+ try{const r=await api('/voice',{text});if(!r.needs_confirmation){note(r.reply,'ok');speak(r.reply);return}
+  PID=r.pending_id;$('#conf').hidden=false;$('#conf').innerHTML='<b>Sahi hai?</b>'+r.lines.map(l=>`<div class="line">${esc(l)}</div>`).join('')+(r.new_customers.length?`<p class="mut">Naya customer: ${esc(r.new_customers.join(', '))}</p>`:'')+(r.warn_big?'<p class="bad">Badi rakam hai, dobara check karein.</p>':'')+'<div class="row"><button class="btn pri" id="yes" style="flex:1">Haan, save</button><button class="btn bad" id="no" style="flex:1">Nahi</button></div>';
+  $('#yes').onclick=async()=>{try{const c=await api('/confirm',{pending_id:PID});$('#conf').hidden=true;$('#tx').value='';note(c.reply||'Ho gaya','ok');speak(c.reply||'Ho gaya');refresh()}catch(e){note(e.message,'bad');speak(e.message)}};
+  $('#no').onclick=async()=>{await api('/cancel',{pending_id:PID});$('#conf').hidden=true;note('Cancel kiya')};note('Suniye aur confirm kijiye');speak(r.reply)}
+ catch(e){note(e.message,'bad')}}
+$('#go').onclick=()=>send($('#tx').value);$('#tx').onkeydown=e=>{if(e.key==='Enter')send($('#tx').value)};
+$('#lang').onclick=()=>{lang=lang==='hi-IN'?'en-IN':'hi-IN';$('#lang').textContent=lang==='hi-IN'?'हिं':'EN'};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec,on=false;
+$('#mic').onclick=()=>{if(!SR){note('Is browser mein mic nahi chalta. Likhkar bhejein.','bad');return}if(on){rec.stop();return}
+ rec=new SR();rec.lang=lang;rec.interimResults=true;rec.onstart=()=>{on=true;$('#mic').classList.add('on');note('Boliye…')};
+ rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;$('#tx').value=t;if(e.results[e.results.length-1].isFinal)send(t)};
+ rec.onerror=e=>note(e.error==='network'?'Voice ke liye internet chahiye. Likhkar bhejein.':'Mic mein dikkat. Likhkar try karein.','bad');
+ rec.onend=()=>{on=false;$('#mic').classList.remove('on')};rec.start()};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));['today','cust','inv','bill'].forEach(n=>$('#p-'+n).hidden=n!==b.dataset.t)});
+async function refresh(){try{
+ const d=await api('/dashboard'),mx=Math.max(1,...d.chart.map(x=>x.rev));
+ $('#p-today').innerHTML=`<div class="stats"><div class="stat"><span class="mut">Aaj ki bikri (revenue)</span><b>${rs(d.revenue)}</b><span class="mut">${d.cups} cup · cash ${rs(d.cash)} · UPI ${rs(d.upi)}</span></div>
+ <div class="stat"><span class="mut">Recorded kharcha</span><b>${rs(d.expenses)}</b></div><div class="stat"><span class="mut">Estimated munafa</span><b>${rs(d.est_profit)}</b><span class="mut">${esc(d.profit_note)}</span></div><div class="stat"><span class="mut">Udhaar baaki</span><b>${rs(d.pending_udhaar)}</b></div></div>
+ <div class="card"><b>Pichle din ki bikri</b><div class="bars">${d.chart.map(x=>`<i style="height:${x.rev/mx*100}%" title="${x.d}: ${rs(x.rev)}"></i>`).join('')}</div><p class="mut">Revenue munafa nahi hota.</p></div>
+ <div class="card"><b>Salah aur alerts</b>${d.insights.map(i=>`<div class="ins ${i.sev}"><small>${i.type==='fact'?'Data se pakka':'Andaza (estimate)'}</small>${esc(i.text)}</div>`).join('')||'<p class="mut">Kuch din ka data aane par yahan salah dikhegi.</p>'}</div>
+ <button class="btn" id="rep">Din ki report suno</button>`;
+ $('#rep').onclick=()=>speak(`Aaj ${d.orders} order, ${d.cups} cup. Bikri ${rs(d.revenue)}. Recorded kharcha ${rs(d.expenses)}. Estimated munafa ${rs(d.est_profit)}. Udhaar baaki ${rs(d.pending_udhaar)}.`+(d.prediction?` Kal ke liye andaza ${d.prediction.need.Milk} packet doodh.`:''));
+ const cs=await api('/customers');$('#p-cust').innerHTML=cs.map(c=>`<div class="line"><span>${esc(c.name)}</span><span><b>${rs(c.balance)}</b> ${c.balance>0?`<button class="btn" data-r="${c.id}">Reminder draft</button>`:''}</span></div>`).join('')||'<p class="mut">Abhi koi khata nahi.</p>';
+ document.querySelectorAll('[data-r]').forEach(b=>b.onclick=async()=>{const r=await api('/reminder/'+b.dataset.r);b.outerHTML=`<a class="btn pri" target="_blank" rel="noopener" href="${r.whatsapp_link}">WhatsApp kholo (aap bhejenge)</a>`});
+ const iv=await api('/inventory');$('#p-inv').innerHTML=(d.prediction?`<p class="mut">Kal ka andaza: ${d.prediction.cups} cup (estimate, ${d.prediction.days} din ke data se).</p>`:'')+iv.map(i=>`<div class="line"><span>${i.item}</span><span><b>${i.qty} ${i.unit}</b> <span class="mut">${i.need_tomorrow==null?'':'kal ~'+i.need_tomorrow}</span></span></div>`).join('')
+}catch(e){}}
+$('#bp').onclick=async()=>{try{const r=await api('/bill/parse',{text:$('#bt').value});$('#bo').innerHTML=r.items.map(i=>`<div class="line"><span>${esc(i.item)} ${i.qty} x ${i.price}</span><span class="mut">${i.stock_item?'stock: '+i.stock_item:'stock mein nahi'}</span></div>`).join('')+`<p>Total ₹${r.total}${r.total_mismatch?' <b class="bad">(bill ka total match nahi karta, check karein)</b>':''}</p>${r.unread_lines.length?`<p class="mut">Padhi nahi gayi: ${esc(r.unread_lines.join(' | '))}</p>`:''}<button class="btn pri" id="bc">Sahi hai, save</button>`;
+ $('#bc').onclick=async()=>{try{await api('/bill/confirm',{text:$('#bt').value,supplier:$('#sup').value});$('#bo').innerHTML='<p class="mut">Bill save ho gaya, stock aur kharcha update.</p>';refresh()}catch(e){$('#bo').innerHTML=`<p class="bad">${esc(e.message)}</p>`}}}catch(e){$('#bo').textContent=e.message}};
+const net=()=>$('#net').textContent=navigator.onLine?'':'Offline: server chahiye';addEventListener('online',net);addEventListener('offline',net);net();view();
+</script></body></html>
