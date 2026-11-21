@@ -104,6 +104,6 @@ Authorization: Bearer <token>
 | GET | `/api/sales/daily?days=7` | View daily product-wise sales |
 
 
-Built by **Team Terabyte** (Sanchitha Poojari).
+Built by (Sanchitha Poojari).
 
 
